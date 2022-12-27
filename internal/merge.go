@@ -2,8 +2,10 @@ package internal
 
 import (
 	"fmt"
-
 	"github.com/arran4/golang-ical"
+	"html"
+	"regexp"
+	"strconv"
 )
 
 func MergeCalendars(calendar1, calendar2 *ics.Calendar) (*ics.Calendar, error) {
@@ -33,10 +35,26 @@ func MergeCalendars(calendar1, calendar2 *ics.Calendar) (*ics.Calendar, error) {
 	}
 
 	for _, event := range events {
+		cleanupProperty(event, ics.ComponentPropertySummary)
+		cleanupProperty(event, ics.ComponentPropertyDescription)
 		output.AddVEvent(event)
 	}
 
 	return output, nil
+}
+
+var escapeRegexp = regexp.MustCompile("\\\\([;,\\.])")
+
+func cleanupProperty(event *ics.VEvent, property ics.ComponentProperty) {
+	value := event.GetProperty(property).Value
+	value = escapeRegexp.ReplaceAllString(value, "$1")
+	value = html.UnescapeString(value)
+	unquoted, err := strconv.Unquote(value)
+	if err == nil {
+		value = unquoted
+	}
+
+	event.SetProperty(property, value)
 }
 
 func areSameEvent(event1, event2 *ics.VEvent) (bool, error) {
