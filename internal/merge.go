@@ -6,6 +6,7 @@ import (
 	"html"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -35,6 +36,7 @@ func MergeCalendars(calendar1, calendar2 *ics.Calendar) (*ics.Calendar, error) {
 		}
 	}
 
+	moodleEvents := map[string][]*ics.VEvent{}
 	for _, event := range events {
 		cleanupProperty(event, ics.ComponentPropertySummary)
 		cleanupProperty(event, ics.ComponentPropertyDescription)
@@ -42,6 +44,38 @@ func MergeCalendars(calendar1, calendar2 *ics.Calendar) (*ics.Calendar, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		summary := event.GetProperty(ics.ComponentPropertySummary).Value
+		isMoodleStart := strings.HasSuffix(summary, " beginnt")
+		isMoodleEnd := strings.HasSuffix(summary, " endet")
+		if isMoodleStart || isMoodleEnd {
+			splitSummary := strings.Split(summary, " ")
+			name := strings.Join(splitSummary[:len(splitSummary)-1], " ")
+			if val, ok := moodleEvents[name]; ok {
+				moodleEvents[name] = append(val, event)
+			} else {
+				moodleEvents[name] = []*ics.VEvent{event}
+			}
+			continue
+		}
+
+		output.AddVEvent(event)
+	}
+
+	for name, moodleNamedEvents := range moodleEvents {
+		if len(moodleNamedEvents) != 2 {
+			for _, moodleNamedEvent := range moodleNamedEvents {
+				output.AddVEvent(moodleNamedEvent)
+			}
+
+			continue
+		}
+
+		event, err := mergeMoodleNamedEvents(name, moodleNamedEvents[0], moodleNamedEvents[1])
+		if err != nil {
+			return nil, err
+		}
+
 		output.AddVEvent(event)
 	}
 
@@ -60,6 +94,37 @@ func cleanupProperty(event *ics.VEvent, property ics.ComponentProperty) {
 	}
 
 	event.SetProperty(property, value)
+}
+
+func mergeMoodleNamedEvents(name string, startEvent, endEvent *ics.VEvent) (*ics.VEvent, error) {
+	event := startEvent
+	event.SetSummary(name)
+
+	allDayStart, err := startEvent.GetAllDayStartAt()
+	if err != nil {
+		var start time.Time
+		start, err = startEvent.GetStartAt()
+		if err != nil {
+			return nil, err
+		}
+		event.SetStartAt(start)
+	} else {
+		event.SetAllDayStartAt(allDayStart)
+	}
+
+	allDayEnd, err := endEvent.GetAllDayEndAt()
+	if err != nil {
+		var end time.Time
+		end, err = endEvent.GetEndAt()
+		if err != nil {
+			return nil, err
+		}
+		event.SetEndAt(end)
+	} else {
+		event.SetAllDayEndAt(allDayEnd)
+	}
+
+	return event, nil
 }
 
 func expandAllDayEvent(event *ics.VEvent) error {
