@@ -1,7 +1,7 @@
 package internal_test
 
 import (
-	"github.com/jld3103/rwth-calendar/internal"
+	"github.com/provokateurin/rwth-calendar/internal"
 	"testing"
 )
 

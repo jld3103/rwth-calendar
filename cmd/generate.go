@@ -9,7 +9,7 @@ import (
 	"github.com/arran4/golang-ical"
 	"github.com/spf13/cobra"
 
-	"github.com/jld3103/rwth-calendar/internal"
+	"github.com/provokateurin/rwth-calendar/internal"
 )
 
 func NewGenerateCmd() *cobra.Command {

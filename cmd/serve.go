@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	ics "github.com/arran4/golang-ical"
-	"github.com/jld3103/rwth-calendar/internal"
+	"github.com/provokateurin/rwth-calendar/internal"
 	"github.com/spf13/cobra"
 	"net/http"
 	"regexp"

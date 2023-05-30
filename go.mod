@@ -1,4 +1,4 @@
-module github.com/jld3103/rwth-calendar
+module github.com/provokateurin/rwth-calendar
 
 go 1.19
 

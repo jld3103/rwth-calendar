@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jld3103/rwth-calendar/cmd"
+	"github.com/provokateurin/rwth-calendar/cmd"
 )
 
 func main() {
