@@ -6,6 +6,7 @@ import (
 	"html"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 func MergeCalendars(calendar1, calendar2 *ics.Calendar) (*ics.Calendar, error) {
@@ -37,6 +38,10 @@ func MergeCalendars(calendar1, calendar2 *ics.Calendar) (*ics.Calendar, error) {
 	for _, event := range events {
 		cleanupProperty(event, ics.ComponentPropertySummary)
 		cleanupProperty(event, ics.ComponentPropertyDescription)
+		err := expandAllDayEvent(event)
+		if err != nil {
+			return nil, err
+		}
 		output.AddVEvent(event)
 	}
 
@@ -55,6 +60,24 @@ func cleanupProperty(event *ics.VEvent, property ics.ComponentProperty) {
 	}
 
 	event.SetProperty(property, value)
+}
+
+func expandAllDayEvent(event *ics.VEvent) error {
+	start, err := event.GetStartAt()
+	if err != nil {
+		return err
+	}
+	end, err := event.GetEndAt()
+	if err != nil {
+		return err
+	}
+
+	if start.Equal(end) {
+		event.SetAllDayStartAt(start)
+		event.SetAllDayEndAt(start.Add(time.Hour * 24))
+	}
+
+	return nil
 }
 
 func areSameEvent(event1, event2 *ics.VEvent) (bool, error) {
