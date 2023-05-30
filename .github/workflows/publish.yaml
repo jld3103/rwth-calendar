@@ -14,4 +14,4 @@ jobs:
           go-version: 1.19
       - uses: actions/checkout@v2
       - uses: imjasonh/setup-ko@v0.6
-      - run: ko build
+      - run: ko build --bare --tags="$GITHUB_SHA"
