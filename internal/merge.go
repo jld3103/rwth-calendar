@@ -40,7 +40,12 @@ func MergeCalendars(calendar1, calendar2 *ics.Calendar) (*ics.Calendar, error) {
 	for _, event := range events {
 		cleanupProperty(event, ics.ComponentPropertySummary)
 		cleanupProperty(event, ics.ComponentPropertyDescription)
-		err := expandAllDayEvent(event)
+		err := expandLocation(event)
+		if err != nil {
+			return nil, err
+		}
+
+		err = expandAllDayEvent(event)
 		if err != nil {
 			return nil, err
 		}
@@ -94,6 +99,26 @@ func cleanupProperty(event *ics.VEvent, property ics.ComponentProperty) {
 	}
 
 	event.SetProperty(property, value)
+}
+
+func expandLocation(event *ics.VEvent) error {
+	locationProperty := event.GetProperty(ics.ComponentPropertyLocation)
+	if locationProperty == nil {
+		return nil
+	}
+
+	location := NewRWTHLocation(locationProperty.Value)
+	buildingDetails, err := location.GetBuildingDetails()
+	if err != nil {
+		return err
+	}
+
+	if buildingDetails != nil {
+		// BuildingID and RoomID are safe to access here because they were already used to get the building details
+		event.SetProperty(ics.ComponentPropertyLocation, fmt.Sprintf("%s %s %s %s [%s|%s]", location.Name, buildingDetails.Name, buildingDetails.Street, buildingDetails.Place, *location.BuildingID, *location.RoomID))
+	}
+
+	return nil
 }
 
 func mergeMoodleNamedEvents(name string, startEvent, endEvent *ics.VEvent) (*ics.VEvent, error) {

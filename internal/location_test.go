@@ -6,9 +6,9 @@ import (
 )
 
 var h05 = &internal.RWTHLocation{
-	Building: stringP("1385"),
-	Room:     stringP("105"),
-	Name:     "H05",
+	BuildingID: stringP("1385"),
+	RoomID:     stringP("105"),
+	Name:       "H05",
 }
 
 func TestNewRWTHLocation(t *testing.T) {
